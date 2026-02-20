@@ -1,3 +1,28 @@
 pip install -r requirements.txt
 python demo.py       # CLI demo, no server needed
 python app.py        # Start API + dashboard at http://localhost:5000
+
+🔄 # How to push changes later (VERY IMPORTANT)
+
+Whenever you modify files:
+
+✅ Step 1: Check changes
+git status
+✅ Step 2: Add changes
+git add .
+
+or specific file:
+
+git add app.py
+✅ Step 3: Commit changes
+git commit -m "Describe what changed"
+✅ Step 4: Push updates
+git push
+
+That’s it.
+
+🔁 10. If you cloned repo on another computer
+git clone https://github.com/USERNAME/my-project.git
+cd my-project
+
+Then continue with add → commit → push.

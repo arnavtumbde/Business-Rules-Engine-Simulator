@@ -1,0 +1,170 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Loan Eligibility & Rate Rules
+# Compliance team can adjust thresholds without engineering
+# ─────────────────────────────────────────────────────────────────────────────
+
+ruleset:
+  name: Loan Eligibility Engine
+  description: Determines loan eligibility and interest rates based on applicant profile
+  version: "1.4.0"
+  author: Credit Risk Team
+  priority_mode: all
+
+context:
+  - name: credit_score
+    type: integer
+    description: FICO credit score (300–850)
+  - name: annual_income
+    type: float
+    description: Annual income in USD
+  - name: debt_to_income
+    type: float
+    description: Debt-to-income ratio (0.0 to 1.0)
+  - name: employment_years
+    type: float
+    description: Years at current employer
+  - name: loan_amount
+    type: float
+    description: Requested loan amount
+  - name: loan_purpose
+    type: string
+    description: Purpose of loan (home, auto, personal, business)
+  - name: base_rate
+    type: float
+    description: Starting interest rate (e.g. 5.0 for 5%)
+
+rules:
+  - id: L001
+    name: Minimum Credit Score
+    description: Reject applicants below minimum credit threshold
+    priority: 100
+    condition: "credit_score < 580"
+    actions:
+      - set: eligible
+        value: false
+      - set: denial_reason
+        value: "Credit score below minimum threshold (580)"
+      - append: tags
+        value: "DENIED_CREDIT"
+      - log: "Loan denied: credit score {credit_score} < 580"
+
+  - id: L002
+    name: Minimum Income Check
+    description: Applicants must earn enough to service the loan
+    priority: 100
+    condition: "annual_income < 20000"
+    actions:
+      - set: eligible
+        value: false
+      - set: denial_reason
+        value: "Annual income below minimum requirement ($20,000)"
+      - append: tags
+        value: "DENIED_INCOME"
+      - log: "Loan denied: income {annual_income} < $20,000"
+
+  - id: L003
+    name: High DTI Rejection
+    description: Debt-to-income over 50% is too risky
+    priority: 100
+    condition: "debt_to_income > 0.50"
+    actions:
+      - set: eligible
+        value: false
+      - set: denial_reason
+        value: "Debt-to-income ratio exceeds 50% limit"
+      - append: tags
+        value: "DENIED_DTI"
+      - log: "Loan denied: DTI {debt_to_income} exceeds 50%"
+
+  - id: L004
+    name: Excellent Credit Rate Reduction
+    description: Top-tier credit gets best available rates
+    priority: 20
+    condition: "credit_score >= 750"
+    actions:
+      - subtract: base_rate
+        by: 1.5
+      - set: credit_tier
+        value: "Excellent"
+      - append: tags
+        value: "excellent_credit"
+      - log: "Excellent credit tier: -1.5% rate reduction"
+
+  - id: L005
+    name: Good Credit Rate Reduction
+    description: Good credit score gets a moderate rate benefit
+    priority: 20
+    condition: "credit_score >= 700 and credit_score < 750"
+    actions:
+      - subtract: base_rate
+        by: 0.75
+      - set: credit_tier
+        value: "Good"
+      - append: tags
+        value: "good_credit"
+      - log: "Good credit tier: -0.75% rate reduction"
+
+  - id: L006
+    name: Fair Credit Surcharge
+    description: Below-average credit gets a rate penalty
+    priority: 20
+    condition: "credit_score >= 580 and credit_score < 650"
+    actions:
+      - add: base_rate
+        by: 2.0
+      - set: credit_tier
+        value: "Fair"
+      - append: tags
+        value: "fair_credit_surcharge"
+      - log: "Fair credit surcharge: +2.0% added to rate"
+
+  - id: L007
+    name: Long Employment Stability Bonus
+    description: Stable long-term employment reduces risk
+    priority: 30
+    condition: "employment_years >= 5"
+    actions:
+      - subtract: base_rate
+        by: 0.25
+      - append: tags
+        value: "employment_stable"
+      - log: "Employment stability bonus: -0.25% for {employment_years} years"
+
+  - id: L008
+    name: Home Loan Rate Preference
+    description: Home loans get preferential rates
+    priority: 40
+    condition: "loan_purpose == 'home'"
+    actions:
+      - subtract: base_rate
+        by: 0.50
+      - set: loan_category
+        value: "Secured - Real Estate"
+      - append: tags
+        value: "home_loan_discount"
+
+  - id: L009
+    name: Large Loan Flag
+    description: Loans over $100k require additional review
+    priority: 50
+    condition: "loan_amount > 100000"
+    actions:
+      - set: requires_review
+        value: true
+      - append: tags
+        value: "large_loan_review"
+      - log: "Large loan flagged for manual review: ${loan_amount}"
+
+  - id: L010
+    name: High Income Fast Track
+    description: High earners with good credit get expedited processing
+    priority: 60
+    condition: "annual_income > 150000 and credit_score >= 700"
+    actions:
+      - set: fast_track
+        value: true
+      - subtract: base_rate
+        by: 0.25
+      - append: tags
+        value: "premium_client"
+      - log: "High-income premium client: fast-tracked with rate bonus"

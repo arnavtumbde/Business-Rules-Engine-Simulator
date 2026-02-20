@@ -1,0 +1,157 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Insurance Pricing Rules
+# Modify this file to change business logic — NO CODE CHANGES NEEDED
+# ─────────────────────────────────────────────────────────────────────────────
+
+ruleset:
+  name: Insurance Pricing Engine
+  description: Calculates insurance premiums and eligibility based on applicant data
+  version: "2.1.0"
+  author: Risk Team
+  priority_mode: all          # "all" = run every rule | "first_match" = stop at first match
+
+# Context: what fields are expected in input data
+context:
+  - name: age
+    type: integer
+    description: Applicant age in years
+  - name: bmi
+    type: float
+    description: Body mass index
+  - name: smoker
+    type: boolean
+    description: Whether the applicant is a smoker
+  - name: region
+    type: string
+    description: Geographic region (north, south, east, west)
+  - name: accidents
+    type: integer
+    description: Number of accidents in past 5 years
+  - name: base_premium
+    type: float
+    description: Starting monthly premium before adjustments
+
+rules:
+  - id: R001
+    name: Senior Discount
+    description: Applicants over 60 get a loyalty discount
+    priority: 10
+    condition: "age > 60"
+    actions:
+      - set: discount_percent
+        value: 15
+      - append: tags
+        value: "senior"
+      - log: "Senior discount applied for age {age}"
+
+  - id: R002
+    name: Young Driver Surcharge
+    description: Drivers under 25 are statistically higher risk
+    priority: 10
+    condition: "age < 25"
+    actions:
+      - multiply: base_premium
+        by: 1.25
+      - append: tags
+        value: "young_driver"
+      - log: "Young driver surcharge applied (+25%)"
+
+  - id: R003
+    name: Smoker Surcharge
+    description: Smokers have significantly higher health costs
+    priority: 20
+    condition: "smoker == true"
+    actions:
+      - multiply: base_premium
+        by: 1.40
+      - append: tags
+        value: "smoker_surcharge"
+      - log: "Smoker surcharge applied (+40%)"
+
+  - id: R004
+    name: Obesity Risk Factor
+    description: High BMI correlates with health risk
+    priority: 20
+    condition: "bmi > 35"
+    actions:
+      - multiply: base_premium
+        by: 1.20
+      - append: tags
+        value: "high_bmi"
+      - log: "High BMI risk factor applied (+20%)"
+
+  - id: R005
+    name: Excellent Health Discount
+    description: Non-smokers with healthy BMI get a discount
+    priority: 30
+    condition: "smoker == false and bmi < 25"
+    actions:
+      - multiply: base_premium
+        by: 0.90
+      - set: health_bonus
+        value: true
+      - append: tags
+        value: "healthy_lifestyle"
+      - log: "Healthy lifestyle discount applied (-10%)"
+
+  - id: R006
+    name: High Accident Risk
+    description: Multiple accidents indicate high-risk driver
+    priority: 25
+    condition: "accidents >= 3"
+    actions:
+      - multiply: base_premium
+        by: 1.60
+      - set: flag_for_review
+        value: true
+      - append: tags
+        value: "high_risk"
+      - log: "High accident risk flag: {accidents} accidents recorded"
+
+  - id: R007
+    name: Clean Record Bonus
+    description: No accidents in 5 years earns a bonus
+    priority: 25
+    condition: "accidents == 0"
+    actions:
+      - multiply: base_premium
+        by: 0.95
+      - append: tags
+        value: "clean_record"
+      - log: "Clean driving record discount applied (-5%)"
+
+  - id: R008
+    name: Regional Adjustment - North
+    description: Northern regions have higher weather-related claims
+    priority: 15
+    condition: "region == 'north'"
+    actions:
+      - multiply: base_premium
+        by: 1.10
+      - append: tags
+        value: "regional_north"
+
+  - id: R009
+    name: Regional Adjustment - South
+    description: Southern regions have lower claim rates
+    priority: 15
+    condition: "region == 'south'"
+    actions:
+      - multiply: base_premium
+        by: 0.95
+      - append: tags
+        value: "regional_south"
+
+  - id: R010
+    name: Denial - Extreme Risk
+    description: Deny coverage when cumulative risk is too high
+    priority: 100
+    condition: "smoker == true and bmi > 40 and age > 70"
+    actions:
+      - set: denied
+        value: true
+      - set: denial_reason
+        value: "Combined risk factors exceed underwriting limits"
+      - append: tags
+        value: "DENIED"
+      - log: "Coverage DENIED: extreme combined risk profile"

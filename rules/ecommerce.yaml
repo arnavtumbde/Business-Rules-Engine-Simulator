@@ -1,0 +1,162 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# E-Commerce Discount & Promotion Rules
+# Change promotions by editing this file — no deployments needed
+# ─────────────────────────────────────────────────────────────────────────────
+
+ruleset:
+  name: E-Commerce Promotions Engine
+  description: Applies discounts, coupons, and loyalty rewards to shopping carts
+  version: "3.0.1"
+  author: Marketing Team
+  priority_mode: all
+
+context:
+  - name: cart_total
+    type: float
+    description: Total cart value in USD
+  - name: customer_tier
+    type: string
+    description: Customer loyalty tier (bronze, silver, gold, platinum)
+  - name: item_count
+    type: integer
+    description: Number of items in cart
+  - name: is_first_purchase
+    type: boolean
+    description: Whether this is customer's first order
+  - name: coupon_code
+    type: string
+    description: Applied coupon code (if any)
+  - name: days_since_last_order
+    type: integer
+    description: Days elapsed since customer's last order
+
+rules:
+  - id: D001
+    name: First Purchase Welcome
+    description: New customers get a welcome discount
+    priority: 10
+    condition: "is_first_purchase == true"
+    actions:
+      - set: discount_percent
+        value: 20
+      - set: discount_label
+        value: "Welcome Discount"
+      - append: tags
+        value: "first_purchase_discount"
+      - log: "First purchase discount applied: 20% off"
+
+  - id: D002
+    name: Bulk Order Discount
+    description: Large orders get a volume discount
+    priority: 20
+    condition: "cart_total > 200"
+    actions:
+      - set: discount_percent
+        value: 10
+      - append: tags
+        value: "bulk_discount"
+      - log: "Bulk order discount: 10% off orders over $200"
+
+  - id: D003
+    name: Mega Order Discount
+    description: Very large orders get a bigger discount
+    priority: 21
+    condition: "cart_total > 500"
+    actions:
+      - set: discount_percent
+        value: 15
+      - append: tags
+        value: "mega_discount"
+      - log: "Mega order discount: 15% off orders over $500"
+
+  - id: D004
+    name: Gold Tier Bonus
+    description: Gold loyalty members receive extra savings
+    priority: 30
+    condition: "customer_tier == 'gold'"
+    actions:
+      - multiply: cart_total
+        by: 0.92
+      - set: loyalty_discount
+        value: 8
+      - append: tags
+        value: "gold_loyalty"
+      - log: "Gold tier loyalty discount applied (-8%)"
+
+  - id: D005
+    name: Platinum VIP Treatment
+    description: Platinum customers get maximum discount
+    priority: 30
+    condition: "customer_tier == 'platinum'"
+    actions:
+      - multiply: cart_total
+        by: 0.85
+      - set: loyalty_discount
+        value: 15
+      - set: free_shipping
+        value: true
+      - append: tags
+        value: "platinum_vip"
+      - log: "Platinum VIP discount applied (-15% + free shipping)"
+
+  - id: D006
+    name: Win-Back Campaign
+    description: Lapsed customers inactive 90+ days get re-engagement offer
+    priority: 40
+    condition: "days_since_last_order > 90"
+    actions:
+      - set: winback_offer
+        value: true
+      - set: discount_percent
+        value: 25
+      - append: tags
+        value: "winback_offer"
+      - log: "Win-back offer applied for lapsed customer"
+
+  - id: D007
+    name: Free Shipping Threshold
+    description: Orders over $75 qualify for free shipping
+    priority: 50
+    condition: "cart_total > 75"
+    actions:
+      - set: free_shipping
+        value: true
+      - append: tags
+        value: "free_shipping"
+      - log: "Free shipping unlocked (cart > $75)"
+
+  - id: D008
+    name: Multi-Item Bonus
+    description: Buying 5+ items gets an extra percentage off
+    priority: 25
+    condition: "item_count >= 5"
+    actions:
+      - set: multi_item_bonus
+        value: 5
+      - append: tags
+        value: "multi_item_bonus"
+      - log: "Multi-item bonus applied: 5 items in cart"
+
+  - id: D009
+    name: SAVE20 Coupon
+    description: Promotional coupon code for 20% off
+    priority: 60
+    condition: "coupon_code == 'SAVE20'"
+    actions:
+      - set: coupon_discount
+        value: 20
+      - append: tags
+        value: "coupon_SAVE20"
+      - log: "Coupon SAVE20 applied: 20% discount"
+
+  - id: D010
+    name: FREESHIP Coupon
+    description: Free shipping coupon code
+    priority: 60
+    condition: "coupon_code == 'FREESHIP'"
+    actions:
+      - set: free_shipping
+        value: true
+      - append: tags
+        value: "coupon_FREESHIP"
+      - log: "Coupon FREESHIP applied: free shipping"

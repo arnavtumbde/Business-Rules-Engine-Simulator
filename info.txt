@@ -1,0 +1,3 @@
+pip install -r requirements.txt
+python demo.py       # CLI demo, no server needed
+python app.py        # Start API + dashboard at http://localhost:5000

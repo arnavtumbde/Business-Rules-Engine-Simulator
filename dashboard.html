@@ -1,0 +1,1279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RulesForge — Business Rules Engine</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #05050a;
+  --s1: #0c0c14;
+  --s2: #12121d;
+  --s3: #181826;
+  --s4: #1e1e30;
+  --border: #252538;
+  --border2: #32324a;
+  --accent: #6366f1;
+  --accent2: #8b5cf6;
+  --accent3: #06b6d4;
+  --green: #10b981;
+  --red: #ef4444;
+  --yellow: #f59e0b;
+  --orange: #f97316;
+  --text: #e2e2f0;
+  --text2: #8888aa;
+  --text3: #44445a;
+  --mono: 'JetBrains Mono', monospace;
+  --sans: 'DM Sans', sans-serif;
+  --glow: 0 0 20px rgba(99,102,241,0.3);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* TOPBAR */
+.topbar {
+  height: 52px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  gap: 16px;
+  background: rgba(5,5,10,0.95);
+  backdrop-filter: blur(16px);
+  position: sticky;
+  top: 0;
+  z-index: 200;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-right: 8px;
+}
+
+.logo-mark {
+  width: 32px; height: 32px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+  box-shadow: var(--glow);
+}
+
+.logo-name {
+  font-family: var(--mono);
+  font-weight: 700;
+  font-size: 16px;
+  letter-spacing: -0.04em;
+}
+
+.logo-name em { color: var(--accent); font-style: normal; }
+
+.nav-pill {
+  display: flex;
+  background: var(--s2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.nav-btn {
+  padding: 6px 14px;
+  border: none;
+  background: transparent;
+  color: var(--text2);
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  border-right: 1px solid var(--border);
+  transition: all 0.15s;
+  letter-spacing: 0.02em;
+}
+.nav-btn:last-child { border-right: none; }
+.nav-btn.active { background: var(--accent); color: white; }
+.nav-btn:hover:not(.active) { color: var(--text); background: var(--s3); }
+
+.topbar-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.api-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text3);
+}
+
+.pulse-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--green);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(0.85); }
+}
+
+.pulse-dot.offline { background: var(--red); animation: none; }
+
+/* LAYOUT */
+.main {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  height: calc(100vh - 52px);
+}
+
+/* SIDEBAR */
+.sidebar {
+  border-right: 1px solid var(--border);
+  background: var(--s1);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.sidebar-section {
+  padding: 12px 16px 8px;
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text3);
+  border-bottom: 1px solid var(--border);
+}
+
+.ruleset-card {
+  margin: 8px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: all 0.15s;
+  background: var(--s2);
+}
+
+.ruleset-card:hover { border-color: var(--border2); background: var(--s3); }
+.ruleset-card.active { border-color: var(--accent); background: rgba(99,102,241,0.08); }
+
+.ruleset-card-name {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.ruleset-card-desc {
+  font-size: 11px;
+  color: var(--text2);
+  line-height: 1.4;
+  margin-bottom: 8px;
+}
+
+.ruleset-card-meta {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.badge {
+  font-family: var(--mono);
+  font-size: 9px;
+  padding: 2px 7px;
+  border-radius: 20px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.badge-blue { background: rgba(99,102,241,0.15); color: var(--accent); border: 1px solid rgba(99,102,241,0.25); }
+.badge-green { background: rgba(16,185,129,0.12); color: var(--green); border: 1px solid rgba(16,185,129,0.25); }
+.badge-yellow { background: rgba(245,158,11,0.12); color: var(--yellow); border: 1px solid rgba(245,158,11,0.25); }
+.badge-purple { background: rgba(139,92,246,0.12); color: var(--accent2); border: 1px solid rgba(139,92,246,0.25); }
+.badge-red { background: rgba(239,68,68,0.12); color: var(--red); border: 1px solid rgba(239,68,68,0.25); }
+.badge-gray { background: var(--s3); color: var(--text2); border: 1px solid var(--border); }
+
+.sidebar-spacer { flex: 1; }
+
+.sidebar-footer {
+  padding: 12px 16px;
+  border-top: 1px solid var(--border);
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text3);
+  line-height: 1.6;
+}
+
+/* CONTENT AREA */
+.content {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* TABS */
+.tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  background: var(--s1);
+  flex-shrink: 0;
+}
+
+.tab {
+  padding: 12px 20px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text2);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tab:hover { color: var(--text); }
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+.tab .tab-count { font-family: var(--mono); font-size: 10px; }
+
+/* PANELS */
+.panel { display: none; flex: 1; overflow: hidden; flex-direction: column; }
+.panel.active { display: flex; }
+
+/* EVALUATE PANEL */
+.eval-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  flex: 1;
+  overflow: hidden;
+}
+
+.eval-half {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-right: 1px solid var(--border);
+}
+.eval-half:last-child { border-right: none; }
+
+.half-header {
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--s1);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.half-title {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text3);
+}
+
+.half-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+}
+
+textarea.code-area {
+  width: 100%;
+  height: 100%;
+  min-height: 300px;
+  background: transparent;
+  border: none;
+  color: #a8e6b8;
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 1.75;
+  resize: none;
+  outline: none;
+}
+
+.btn {
+  padding: 7px 14px;
+  border-radius: 6px;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.15s;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.btn-primary { background: var(--accent); color: white; }
+.btn-primary:hover { background: #5152d8; box-shadow: var(--glow); }
+.btn-ghost { background: var(--s3); color: var(--text2); border: 1px solid var(--border); }
+.btn-ghost:hover { color: var(--text); border-color: var(--border2); }
+.btn-success { background: var(--green); color: white; }
+.btn-success:hover { background: #0da271; }
+.btn-danger { background: var(--red); color: white; }
+.btn-sm { padding: 4px 10px; font-size: 10px; }
+
+/* RESULT DISPLAY */
+.result-section {
+  margin-bottom: 16px;
+}
+
+.result-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text3);
+  margin-bottom: 8px;
+}
+
+.kv-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.kv-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  background: var(--s2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-family: var(--mono);
+  font-size: 12px;
+}
+
+.kv-key { color: var(--accent3); flex: 1; }
+.kv-val { color: var(--text); font-weight: 500; }
+.kv-val.changed { color: var(--yellow); }
+.kv-val.bool-true { color: var(--green); }
+.kv-val.bool-false { color: var(--red); }
+.kv-val.number { color: var(--orange); }
+
+.rules-fired-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.rule-result-row {
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 13px;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.rule-result-row.fired {
+  border-color: rgba(16,185,129,0.25);
+  background: rgba(16,185,129,0.05);
+}
+
+.rule-result-row.skipped {
+  border-color: var(--border);
+  background: var(--s2);
+  opacity: 0.5;
+}
+
+.rule-icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+.rule-result-id { font-family: var(--mono); font-size: 10px; color: var(--text3); }
+.rule-result-name { font-size: 12px; font-weight: 600; }
+.rule-result-cond { font-family: var(--mono); font-size: 10px; color: var(--text2); margin-top: 3px; }
+.rule-result-logs { margin-top: 5px; }
+.rule-log-line { font-family: var(--mono); font-size: 10px; color: var(--text2); padding: 1px 0; }
+
+/* TRACE */
+.trace-block {
+  margin-bottom: 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.trace-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--s2);
+  cursor: pointer;
+  user-select: none;
+}
+
+.trace-header:hover { background: var(--s3); }
+.trace-body { padding: 10px 12px; background: var(--s1); }
+.trace-line { font-family: var(--mono); font-size: 11px; color: var(--text2); padding: 2px 0; }
+.trace-line.action { color: var(--accent3); }
+
+/* RULES VIEWER */
+.rules-list {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.rule-card {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  transition: border-color 0.15s;
+}
+
+.rule-card:hover { border-color: var(--border2); }
+
+.rule-card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  background: var(--s2);
+}
+
+.rule-priority {
+  font-family: var(--mono);
+  font-size: 10px;
+  width: 28px; height: 28px;
+  border-radius: 6px;
+  background: var(--s3);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text2);
+  border: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.rule-info { flex: 1; }
+.rule-card-id { font-family: var(--mono); font-size: 10px; color: var(--text3); }
+.rule-card-name { font-size: 13px; font-weight: 600; }
+.rule-card-desc { font-size: 12px; color: var(--text2); margin-top: 2px; }
+
+.rule-card-body {
+  padding: 12px 14px;
+  background: var(--s1);
+  border-top: 1px solid var(--border);
+}
+
+.rule-condition {
+  font-family: var(--mono);
+  font-size: 12px;
+  padding: 8px 12px;
+  background: rgba(6,182,212,0.08);
+  border: 1px solid rgba(6,182,212,0.2);
+  border-radius: 6px;
+  color: var(--accent3);
+  margin-bottom: 10px;
+}
+
+.actions-list { display: flex; flex-direction: column; gap: 4px; }
+.action-row {
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 5px 8px;
+  background: var(--s2);
+  border-radius: 4px;
+  color: var(--text2);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.action-verb { color: var(--accent2); font-weight: 600; }
+.action-field { color: var(--accent3); }
+.action-value { color: var(--yellow); }
+
+/* YAML EDITOR */
+.yaml-editor-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+textarea.yaml-edit {
+  flex: 1;
+  background: var(--s1);
+  border: none;
+  color: #a8d4b0;
+  font-family: var(--mono);
+  font-size: 12.5px;
+  line-height: 1.7;
+  padding: 20px;
+  resize: none;
+  outline: none;
+}
+
+.editor-toolbar {
+  padding: 10px 16px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  gap: 8px;
+  background: var(--s1);
+  flex-shrink: 0;
+  align-items: center;
+}
+
+.yaml-status {
+  margin-left: auto;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text3);
+}
+
+.yaml-status.valid { color: var(--green); }
+.yaml-status.invalid { color: var(--red); }
+
+/* STATS BAR */
+.stats-bar {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--border);
+  background: var(--s1);
+  flex-shrink: 0;
+}
+
+.stat-item {
+  padding: 8px 20px;
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.stat-val {
+  font-family: var(--mono);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.stat-val.green { color: var(--green); }
+.stat-val.yellow { color: var(--yellow); }
+.stat-val.red { color: var(--red); }
+
+.stat-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text3);
+}
+
+/* SAMPLES */
+.sample-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.sample-card {
+  padding: 10px 12px;
+  background: var(--s2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.sample-card:hover { border-color: var(--accent); background: rgba(99,102,241,0.07); }
+.sample-card-name { font-size: 12px; font-weight: 600; margin-bottom: 3px; }
+.sample-card-desc { font-size: 11px; color: var(--text2); }
+
+/* TOAST */
+.toasts {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.toast {
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-family: var(--mono);
+  font-size: 12px;
+  border: 1px solid;
+  animation: slideUp 0.2s ease;
+  max-width: 320px;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.toast.success { background: rgba(16,185,129,0.15); color: var(--green); border-color: rgba(16,185,129,0.3); }
+.toast.error { background: rgba(239,68,68,0.15); color: var(--red); border-color: rgba(239,68,68,0.3); }
+.toast.info { background: rgba(99,102,241,0.15); color: var(--accent); border-color: rgba(99,102,241,0.3); }
+
+/* SCROLLBARS */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+/* NO RESULTS */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text3);
+}
+
+.empty-icon { font-size: 40px; margin-bottom: 12px; }
+.empty-msg { font-size: 13px; }
+
+/* CONTEXT EDITOR */
+.context-field {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.ctx-badge {
+  font-family: var(--mono);
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  min-width: 60px;
+  text-align: center;
+}
+
+.ctx-type-int { background: rgba(249,115,22,0.15); color: var(--orange); }
+.ctx-type-float { background: rgba(249,115,22,0.15); color: var(--orange); }
+.ctx-type-bool { background: rgba(139,92,246,0.15); color: var(--accent2); }
+.ctx-type-str { background: rgba(6,182,212,0.12); color: var(--accent3); }
+.ctx-name { font-family: var(--mono); font-size: 12px; color: var(--text2); flex: 1; }
+.ctx-desc { font-size: 11px; color: var(--text3); }
+
+/* DIVIDER */
+.divider { height: 1px; background: var(--border); margin: 12px 0; }
+
+/* TIMING CHIP */
+.timing-chip {
+  font-family: var(--mono);
+  font-size: 10px;
+  padding: 2px 8px;
+  background: var(--s3);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  color: var(--text3);
+}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="logo">
+    <div class="logo-mark">⚙</div>
+    <div class="logo-name">Rules<em>Forge</em></div>
+  </div>
+  <div class="nav-pill">
+    <button class="nav-btn active" onclick="switchView('evaluate')">▶ Evaluate</button>
+    <button class="nav-btn" onclick="switchView('rules')">📋 Rules</button>
+    <button class="nav-btn" onclick="switchView('editor')">✏ YAML Editor</button>
+    <button class="nav-btn" onclick="switchView('api')">🔌 API Docs</button>
+  </div>
+  <div class="topbar-right">
+    <div class="api-status">
+      <div class="pulse-dot" id="statusDot"></div>
+      <span id="statusText">Connecting...</span>
+    </div>
+  </div>
+</div>
+
+<div class="main">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-section">Rulesets</div>
+    <div id="rulesetList">
+      <div style="padding:20px;text-align:center;color:var(--text3);font-size:12px;">Loading...</div>
+    </div>
+    <div class="sidebar-spacer"></div>
+    <div class="sidebar-footer">
+      RulesForge v1.0<br>
+      Edit YAML → rules change instantly<br>
+      No code deployment needed
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <!-- STATS BAR -->
+    <div class="stats-bar" id="statsBar" style="display:none">
+      <div class="stat-item">
+        <div class="stat-val" id="statRules">—</div>
+        <div class="stat-label">Total Rules</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-val green" id="statFired">—</div>
+        <div class="stat-label">Rules Fired</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-val yellow" id="statSkipped">—</div>
+        <div class="stat-label">Skipped</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-val" id="statTime">—</div>
+        <div class="stat-label">Eval Time</div>
+      </div>
+    </div>
+
+    <!-- TABS -->
+    <div class="tabs" id="contentTabs" style="display:none">
+      <div class="tab active" id="tabEvaluate" onclick="showTab('evaluate')">▶ Evaluate</div>
+      <div class="tab" id="tabRules" onclick="showTab('rules')">📋 Rules Viewer</div>
+      <div class="tab" id="tabEditor" onclick="showTab('editor')">✏ YAML Editor</div>
+      <div class="tab" id="tabApi" onclick="showTab('api')">🔌 API Docs</div>
+    </div>
+
+    <!-- EVALUATE PANEL -->
+    <div class="panel active" id="panelEvaluate">
+      <div class="eval-layout">
+        <div class="eval-half">
+          <div class="half-header">
+            <span class="half-title">📥 Input Data (JSON)</span>
+            <div style="display:flex;gap:6px">
+              <button class="btn btn-ghost btn-sm" onclick="formatJSON()">Format</button>
+              <button class="btn btn-primary btn-sm" onclick="runEvaluate()">▶ Run</button>
+            </div>
+          </div>
+          <div style="padding:12px;border-bottom:1px solid var(--border);flex-shrink:0;">
+            <div style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.08em;">Sample Inputs</div>
+            <div class="sample-grid" id="sampleGrid"></div>
+          </div>
+          <div class="half-body" style="padding:0">
+            <textarea class="code-area" id="inputJSON" style="padding:16px" placeholder='{"age": 65, "smoker": false, ...}'></textarea>
+          </div>
+          <div style="padding:8px 16px;border-top:1px solid var(--border);background:var(--s1);flex-shrink:0;display:flex;align-items:center;gap:8px">
+            <label style="display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;color:var(--text2);cursor:pointer">
+              <input type="checkbox" id="debugMode" style="accent-color:var(--accent)"> Debug trace
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;color:var(--text2);cursor:pointer">
+              <input type="checkbox" id="reloadMode" style="accent-color:var(--accent)"> Force reload YAML
+            </label>
+          </div>
+        </div>
+
+        <div class="eval-half">
+          <div class="half-header">
+            <span class="half-title">📤 Result</span>
+            <div id="evalTiming"></div>
+          </div>
+          <div class="half-body" id="resultBody">
+            <div class="empty-state">
+              <div class="empty-icon">⚡</div>
+              <div class="empty-msg">Select a ruleset and click Run to evaluate rules</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RULES PANEL -->
+    <div class="panel" id="panelRules">
+      <div class="half-header" style="flex-shrink:0">
+        <span class="half-title">Rules in this Ruleset</span>
+        <span class="badge badge-blue" id="rulesCount"></span>
+      </div>
+      <div class="rules-list" id="rulesList">
+        <div class="empty-state">
+          <div class="empty-icon">📋</div>
+          <div class="empty-msg">Select a ruleset from the sidebar</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- YAML EDITOR PANEL -->
+    <div class="panel" id="panelEditor">
+      <div class="yaml-editor-wrap">
+        <div class="half-header" style="flex-shrink:0">
+          <span class="half-title">✏ Live YAML Editor</span>
+          <span class="yaml-status" id="yamlStatus">—</span>
+        </div>
+        <textarea class="yaml-edit" id="yamlEditArea" spellcheck="false"
+          placeholder="Select a ruleset to edit its YAML"
+          oninput="onYamlChange()"></textarea>
+        <div class="editor-toolbar">
+          <button class="btn btn-success" onclick="saveYAML()">💾 Save & Hot-Reload</button>
+          <button class="btn btn-ghost" onclick="reloadYAML()">↺ Discard Changes</button>
+          <span style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-left:8px">
+            Changes take effect immediately — no server restart
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- API DOCS PANEL -->
+    <div class="panel" id="panelApi">
+      <div class="half-body" style="overflow-y:auto;padding:24px;max-width:760px">
+        <div style="font-size:22px;font-weight:700;margin-bottom:6px">REST API Reference</div>
+        <div style="color:var(--text2);font-size:14px;margin-bottom:24px">Base URL: <code style="font-family:var(--mono);color:var(--accent3)">http://localhost:5000</code></div>
+
+        <div id="apiDocs"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toasts" id="toasts"></div>
+
+<script>
+// ─── STATE ─────────────────────────────────────────────────────────────────────
+let currentRuleset = null;
+let rulesets = [];
+const API = '';  // same origin
+
+const SAMPLES = {
+  insurance: [
+    { label: "👴 Senior Healthy", desc: "Non-smoker, 65, clean record",
+      data: { age: 65, bmi: 23.5, smoker: false, region: "south", accidents: 0, base_premium: 400 }},
+    { label: "🚬 Smoker + Obese", desc: "Combined risk factors",
+      data: { age: 45, bmi: 38, smoker: true, region: "north", accidents: 1, base_premium: 500 }},
+    { label: "🧑‍🎓 Young Driver", desc: "Under 25, multiple accidents",
+      data: { age: 22, bmi: 24, smoker: false, region: "east", accidents: 3, base_premium: 350 }},
+    { label: "⚠ Extreme Risk", desc: "Should be denied coverage",
+      data: { age: 72, bmi: 42, smoker: true, region: "west", accidents: 2, base_premium: 600 }},
+  ],
+  ecommerce: [
+    { label: "🛍 New Customer", desc: "First purchase, small cart",
+      data: { cart_total: 89, customer_tier: "bronze", item_count: 2, is_first_purchase: true, coupon_code: "", days_since_last_order: 0 }},
+    { label: "💎 Platinum VIP", desc: "Loyal big spender",
+      data: { cart_total: 650, customer_tier: "platinum", item_count: 8, is_first_purchase: false, coupon_code: "", days_since_last_order: 14 }},
+    { label: "🎟 Coupon User", desc: "SAVE20 discount code",
+      data: { cart_total: 120, customer_tier: "silver", item_count: 3, is_first_purchase: false, coupon_code: "SAVE20", days_since_last_order: 30 }},
+    { label: "💤 Lapsed Customer", desc: "Inactive 120 days",
+      data: { cart_total: 45, customer_tier: "bronze", item_count: 1, is_first_purchase: false, coupon_code: "", days_since_last_order: 120 }},
+  ],
+  loans: [
+    { label: "⭐ Prime Borrower", desc: "Excellent credit, stable income",
+      data: { credit_score: 780, annual_income: 120000, debt_to_income: 0.22, employment_years: 8, loan_amount: 50000, loan_purpose: "home", base_rate: 5.5 }},
+    { label: "📊 Average Profile", desc: "Fair credit, modest income",
+      data: { credit_score: 640, annual_income: 52000, debt_to_income: 0.35, employment_years: 3, loan_amount: 20000, loan_purpose: "auto", base_rate: 7.0 }},
+    { label: "❌ Denied - Low Score", desc: "Below minimum threshold",
+      data: { credit_score: 540, annual_income: 35000, debt_to_income: 0.40, employment_years: 2, loan_amount: 15000, loan_purpose: "personal", base_rate: 9.0 }},
+    { label: "🏢 High DTI Denied", desc: "Too much existing debt",
+      data: { credit_score: 690, annual_income: 60000, debt_to_income: 0.58, employment_years: 5, loan_amount: 30000, loan_purpose: "business", base_rate: 6.5 }},
+  ]
+};
+
+// ─── API ───────────────────────────────────────────────────────────────────────
+async function apiFetch(path, opts={}) {
+  const res = await fetch(API + path, opts);
+  const json = await res.json();
+  if (!res.ok) throw new Error(json.message || 'API Error');
+  return json;
+}
+
+// ─── INIT ───────────────────────────────────────────────────────────────────────
+async function init() {
+  await checkHealth();
+  await loadRulesets();
+  buildApiDocs();
+}
+
+async function checkHealth() {
+  try {
+    const data = await apiFetch('/api/health');
+    document.getElementById('statusDot').className = 'pulse-dot';
+    document.getElementById('statusText').textContent = 'API Online';
+  } catch {
+    document.getElementById('statusDot').className = 'pulse-dot offline';
+    document.getElementById('statusText').textContent = 'API Offline';
+  }
+}
+
+async function loadRulesets() {
+  try {
+    const data = await apiFetch('/api/rulesets');
+    rulesets = data.rulesets;
+    renderSidebar();
+    if (rulesets.length > 0) selectRuleset(rulesets[0].id);
+  } catch(e) {
+    toast('Failed to load rulesets: ' + e.message, 'error');
+  }
+}
+
+function renderSidebar() {
+  const el = document.getElementById('rulesetList');
+  el.innerHTML = rulesets.map(r => `
+    <div class="ruleset-card" id="rc-${r.id}" onclick="selectRuleset('${r.id}')">
+      <div class="ruleset-card-name">${r.name}</div>
+      <div class="ruleset-card-desc">${r.description}</div>
+      <div class="ruleset-card-meta">
+        <span class="badge badge-blue">${r.rule_count} rules</span>
+        <span class="badge badge-gray">v${r.version}</span>
+        <span class="badge badge-purple">${r.priority_mode}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function selectRuleset(id) {
+  currentRuleset = id;
+  document.querySelectorAll('.ruleset-card').forEach(c => c.classList.remove('active'));
+  const card = document.getElementById('rc-' + id);
+  if (card) card.classList.add('active');
+
+  document.getElementById('statsBar').style.display = 'flex';
+  document.getElementById('contentTabs').style.display = 'flex';
+
+  // Load full ruleset data
+  try {
+    const data = await apiFetch(`/api/rulesets/${id}`);
+    renderRules(data.rules);
+    renderSamples(id);
+    updateStats(data.rules.length, '—', '—', '—');
+
+    // Set default input
+    const samples = SAMPLES[id];
+    if (samples && samples.length > 0) {
+      document.getElementById('inputJSON').value = JSON.stringify(samples[0].data, null, 2);
+    }
+  } catch(e) {
+    toast('Failed to load ruleset: ' + e.message, 'error');
+  }
+
+  // Load YAML for editor
+  try {
+    const yaml = await fetch(`${API}/api/rulesets/${id}/yaml`).then(r => r.text());
+    document.getElementById('yamlEditArea').value = yaml;
+    document.getElementById('yamlStatus').textContent = '● valid';
+    document.getElementById('yamlStatus').className = 'yaml-status valid';
+  } catch(e) {}
+}
+
+// ─── SAMPLES ──────────────────────────────────────────────────────────────────
+function renderSamples(rulesetId) {
+  const samples = SAMPLES[rulesetId] || [];
+  const grid = document.getElementById('sampleGrid');
+  grid.innerHTML = samples.map((s, i) => `
+    <div class="sample-card" onclick="loadSample(${JSON.stringify(JSON.stringify(s.data))})">
+      <div class="sample-card-name">${s.label}</div>
+      <div class="sample-card-desc">${s.desc}</div>
+    </div>
+  `).join('');
+}
+
+function loadSample(jsonStr) {
+  document.getElementById('inputJSON').value = JSON.stringify(JSON.parse(jsonStr), null, 2);
+  runEvaluate();
+}
+
+// ─── EVALUATE ─────────────────────────────────────────────────────────────────
+async function runEvaluate() {
+  if (!currentRuleset) { toast('Select a ruleset first', 'error'); return; }
+  let inputData;
+  try {
+    inputData = JSON.parse(document.getElementById('inputJSON').value);
+  } catch(e) {
+    toast('Invalid JSON input', 'error'); return;
+  }
+
+  const debug = document.getElementById('debugMode').checked;
+  const reload = document.getElementById('reloadMode').checked;
+  const url = `${API}/api/evaluate/${currentRuleset}?debug=${debug}&reload=${reload}`;
+
+  try {
+    const result = await apiFetch(url, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(inputData)
+    });
+    renderResult(result, inputData);
+  } catch(e) {
+    toast('Evaluation failed: ' + e.message, 'error');
+  }
+}
+
+function renderResult(result, input) {
+  const output = result.output;
+  const fired = result.rules_fired;
+  const trace = result.execution_trace;
+  const meta = result.metadata;
+
+  updateStats(result.rules_total, result.rules_fired_count,
+    result.rules_total - result.rules_fired_count, meta.elapsed_ms + 'ms');
+
+  document.getElementById('evalTiming').innerHTML =
+    `<span class="timing-chip">⏱ ${meta.elapsed_ms}ms</span>`;
+
+  // Build diff between input and output
+  const changed = {};
+  const added = {};
+  for (const [k, v] of Object.entries(output)) {
+    if (!(k in input)) added[k] = v;
+    else if (JSON.stringify(input[k]) !== JSON.stringify(v)) changed[k] = v;
+  }
+
+  let html = '';
+
+  // Output context changes
+  html += `<div class="result-section">
+    <div class="result-label">📤 Output Changes</div>
+    <div class="kv-grid">`;
+
+  for (const [k, v] of Object.entries(output)) {
+    const isChanged = k in changed;
+    const isAdded = k in added;
+    const isTag = k === 'tags';
+    let valClass = '';
+    let valDisplay = '';
+
+    if (isTag && Array.isArray(v)) {
+      valDisplay = v.length ? v.map(t =>
+        `<span class="badge ${t==='DENIED'||t.startsWith('DENIED_') ? 'badge-red' : 'badge-blue'}" style="font-size:9px">${t}</span>`
+      ).join(' ') : '<span style="color:var(--text3)">none</span>';
+    } else if (typeof v === 'boolean') {
+      valClass = v ? 'bool-true' : 'bool-false';
+      valDisplay = String(v);
+    } else if (typeof v === 'number') {
+      valClass = 'number';
+      valDisplay = typeof v === 'number' && !Number.isInteger(v) ? v.toFixed(2) : String(v);
+    } else {
+      valDisplay = v === null ? '<em style="color:var(--text3)">null</em>' : String(v);
+    }
+
+    if (isChanged) valClass += ' changed';
+
+    html += `<div class="kv-row">
+      <span class="kv-key">${k}</span>
+      ${isAdded ? '<span class="badge badge-green" style="font-size:8px">NEW</span>' : ''}
+      ${isChanged ? '<span class="badge badge-yellow" style="font-size:8px">CHANGED</span>' : ''}
+      <span class="kv-val ${valClass}">${isTag ? valDisplay : `<span>${valDisplay}</span>`}</span>
+    </div>`;
+  }
+  html += '</div></div>';
+
+  // Rules fired
+  html += `<div class="result-section">
+    <div class="result-label">⚡ Rules Fired (${fired.length})</div>
+    <div class="rules-fired-list">`;
+
+  if (trace) {
+    trace.forEach(entry => {
+      const cls = entry.matched ? 'fired' : 'skipped';
+      const icon = entry.matched ? '✅' : '⬜';
+      html += `<div class="rule-result-row ${cls}">
+        <span class="rule-icon">${icon}</span>
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">
+            <span class="rule-result-id">${entry.rule_id}</span>
+            <span class="rule-result-name">${entry.name}</span>
+          </div>
+          <div class="rule-result-cond">if: ${entry.condition}</div>
+          ${entry.matched && entry.logs?.length ? `
+            <div class="rule-result-logs">
+              ${entry.logs.map(l => `<div class="rule-log-line">↳ ${l}</div>`).join('')}
+            </div>` : ''}
+        </div>
+      </div>`;
+    });
+  } else {
+    fired.forEach(id => {
+      html += `<div class="rule-result-row fired"><span class="rule-icon">✅</span>
+        <div><span class="rule-result-id">${id}</span></div></div>`;
+    });
+  }
+
+  if (fired.length === 0) {
+    html += `<div style="text-align:center;padding:20px;color:var(--text3);font-size:13px">No rules matched</div>`;
+  }
+
+  html += '</div></div>';
+
+  document.getElementById('resultBody').innerHTML = html;
+}
+
+// ─── RULES VIEWER ─────────────────────────────────────────────────────────────
+function renderRules(rules) {
+  document.getElementById('rulesCount').textContent = rules.length + ' rules';
+  const list = document.getElementById('rulesList');
+  list.innerHTML = rules.map(r => {
+    const actions = (r.actions || []).map(a => {
+      if (a.set !== undefined) return `<div class="action-row"><span class="action-verb">SET</span> <span class="action-field">${a.set}</span> <span style="color:var(--text3)">→</span> <span class="action-value">${JSON.stringify(a.value)}</span></div>`;
+      if (a.multiply !== undefined) return `<div class="action-row"><span class="action-verb">MULTIPLY</span> <span class="action-field">${a.multiply}</span> <span style="color:var(--text3)">×</span> <span class="action-value">${a.by}</span></div>`;
+      if (a.add !== undefined) return `<div class="action-row"><span class="action-verb">ADD</span> <span class="action-field">${a.add}</span> <span style="color:var(--text3)">+</span> <span class="action-value">${a.by}</span></div>`;
+      if (a.subtract !== undefined) return `<div class="action-row"><span class="action-verb">SUB</span> <span class="action-field">${a.subtract}</span> <span style="color:var(--text3)">-</span> <span class="action-value">${a.by}</span></div>`;
+      if (a.append !== undefined) return `<div class="action-row"><span class="action-verb">APPEND</span> <span class="action-field">${a.append}</span> <span style="color:var(--text3)">←</span> <span class="action-value">"${a.value}"</span></div>`;
+      if (a.log !== undefined) return `<div class="action-row"><span class="action-verb" style="color:var(--text3)">LOG</span> <span style="color:var(--text3)">${a.log}</span></div>`;
+      return '';
+    }).join('');
+
+    const pBadge = r.priority <= 20 ? 'badge-red' : r.priority <= 40 ? 'badge-yellow' : 'badge-gray';
+
+    return `<div class="rule-card">
+      <div class="rule-card-header">
+        <div class="rule-priority">${r.priority}</div>
+        <div class="rule-info">
+          <div style="display:flex;align-items:center;gap:6px">
+            <span class="rule-card-id">${r.id}</span>
+            <span class="badge ${pBadge}" style="font-size:8px">P${r.priority}</span>
+          </div>
+          <div class="rule-card-name">${r.name}</div>
+          ${r.description ? `<div class="rule-card-desc">${r.description}</div>` : ''}
+        </div>
+      </div>
+      <div class="rule-card-body">
+        <div class="rule-condition">if ${r.condition}</div>
+        <div class="actions-list">${actions}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ─── YAML EDITOR ──────────────────────────────────────────────────────────────
+function onYamlChange() {
+  const yaml = document.getElementById('yamlEditArea').value;
+  const status = document.getElementById('yamlStatus');
+  // Basic validation hint
+  if (yaml.includes('ruleset:') && yaml.includes('rules:')) {
+    status.textContent = '● looks valid';
+    status.className = 'yaml-status valid';
+  } else {
+    status.textContent = '● missing required keys';
+    status.className = 'yaml-status invalid';
+  }
+}
+
+async function saveYAML() {
+  if (!currentRuleset) { toast('No ruleset selected', 'error'); return; }
+  const content = document.getElementById('yamlEditArea').value;
+  try {
+    const res = await fetch(`${API}/api/rulesets/${currentRuleset}/yaml`, {
+      method: 'PUT',
+      body: content,
+      headers: {'Content-Type': 'text/plain'}
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message);
+    toast(`✅ Saved! ${data.rule_count} rules hot-reloaded`, 'success');
+    // Refresh the rules view
+    const rdata = await apiFetch(`/api/rulesets/${currentRuleset}`);
+    renderRules(rdata.rules);
+    await loadRulesets();
+  } catch(e) {
+    toast('Save failed: ' + e.message, 'error');
+  }
+}
+
+async function reloadYAML() {
+  if (!currentRuleset) return;
+  const yaml = await fetch(`${API}/api/rulesets/${currentRuleset}/yaml`).then(r => r.text());
+  document.getElementById('yamlEditArea').value = yaml;
+  onYamlChange();
+  toast('YAML reloaded from disk', 'info');
+}
+
+// ─── HELPERS ──────────────────────────────────────────────────────────────────
+function updateStats(total, fired, skipped, time) {
+  document.getElementById('statRules').textContent = total;
+  document.getElementById('statFired').textContent = fired;
+  document.getElementById('statSkipped').textContent = skipped;
+  document.getElementById('statTime').textContent = time;
+}
+
+function formatJSON() {
+  try {
+    const val = JSON.parse(document.getElementById('inputJSON').value);
+    document.getElementById('inputJSON').value = JSON.stringify(val, null, 2);
+  } catch(e) { toast('Invalid JSON', 'error'); }
+}
+
+function showTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(`tab${name.charAt(0).toUpperCase()+name.slice(1)}`).classList.add('active');
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById(`panel${name.charAt(0).toUpperCase()+name.slice(1)}`).classList.add('active');
+}
+
+function switchView(name) {
+  showTab(name);
+}
+
+function toast(msg, type='info') {
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.textContent = msg;
+  document.getElementById('toasts').appendChild(el);
+  setTimeout(() => el.remove(), 3500);
+}
+
+// ─── API DOCS ─────────────────────────────────────────────────────────────────
+function buildApiDocs() {
+  const endpoints = [
+    { method: 'GET', path: '/api/rulesets', desc: 'List all available rulesets with metadata', color: '#10b981' },
+    { method: 'GET', path: '/api/rulesets/{name}', desc: 'Get detailed ruleset info including all rules', color: '#10b981' },
+    { method: 'GET', path: '/api/rulesets/{name}/yaml', desc: 'Get raw YAML source of a ruleset', color: '#10b981' },
+    { method: 'PUT', path: '/api/rulesets/{name}/yaml', desc: 'Update YAML (hot-reload — no restart needed)', color: '#f59e0b',
+      body: '# paste full YAML content as plain text in body' },
+    { method: 'POST', path: '/api/evaluate/{name}', desc: 'Evaluate rules against input data. Add ?debug=true for full trace', color: '#6366f1',
+      body: '{\n  "age": 65,\n  "smoker": false,\n  "bmi": 23.5,\n  "base_premium": 400\n}' },
+    { method: 'POST', path: '/api/evaluate/{name}/batch', desc: 'Evaluate rules against multiple records at once', color: '#6366f1',
+      body: '{\n  "records": [\n    {"age": 30, ...},\n    {"age": 65, ...}\n  ]\n}' },
+    { method: 'GET', path: '/api/health', desc: 'Health check — returns engine status', color: '#10b981' },
+  ];
+
+  const el = document.getElementById('apiDocs');
+  el.innerHTML = endpoints.map(e => `
+    <div style="border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:12px">
+      <div style="display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--s2)">
+        <span style="font-family:var(--mono);font-size:11px;font-weight:700;padding:3px 8px;background:${e.color}22;color:${e.color};border-radius:4px;border:1px solid ${e.color}44;min-width:44px;text-align:center">${e.method}</span>
+        <code style="font-family:var(--mono);font-size:13px;color:var(--accent3)">${e.path}</code>
+      </div>
+      <div style="padding:10px 16px;background:var(--s1)">
+        <div style="font-size:13px;color:var(--text2);margin-bottom:${e.body?'10px':'0'}">${e.desc}</div>
+        ${e.body ? `<pre style="background:var(--s2);border:1px solid var(--border);border-radius:6px;padding:10px;font-family:var(--mono);font-size:11px;color:#a8d4b0;overflow-x:auto">${e.body}</pre>` : ''}
+      </div>
+    </div>
+  `).join('');
+}
+
+// ─── START ─────────────────────────────────────────────────────────────────────
+window.addEventListener('keydown', e => {
+  if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') runEvaluate();
+});
+
+init();
+</script>
+</body>
+</html>
